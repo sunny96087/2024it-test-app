@@ -6,13 +6,12 @@ var logger = require("morgan");
 
 var cors = require("cors"); // 引入允許跨網域套件 cors
 
-// console.log(process.env.DB_HOST); // 從 process.env 中讀取並打印 DB_HOST 變數的值 // 這邊會得到 localhost
+const swaggerUi = require("swagger-ui-express");
+const swaggerFile = require("./swagger_output.json");
 
-const { v4: uuidv4 } = require("uuid");
-// console.log(uuidv4()); // 輸出類似：'1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed'
-
-var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
+const indexRouter = require("./routes/index");
+const usersRouter = require("./routes/users");
+const feedbackRoute = require("./routes/feedback");
 
 const mongoose = require("mongoose");
 
@@ -20,7 +19,17 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 
+const Feedback = require("./models/feedback");
+
 var app = express();
+
+// 程式出現重大錯誤時
+process.on("uncaughtException", (err) => {
+  // 記錄錯誤下來，等到服務都處理完後，停掉該 process
+  console.error("Uncaughted Exception！");
+  console.error(err);
+  process.exit(1);
+});
 
 // ? 連接資料庫
 const DB = process.env.DATABASE.replace(
@@ -49,21 +58,46 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+app.use("/feedbacks", feedbackRoute);
 
-// catch 404 and forward to error handler
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
+
+// 404 錯誤
 app.use(function (req, res, next) {
-  next(createError(404));
+  // 回應一個包含錯誤訊息的 JSON 對象
+  res.status(404).json({
+    status: "error",
+    message: "無此路由資訊",
+    path: req.originalUrl, // 提供更多的上下文信息
+  });
 });
 
-// error handler
+// * 開發環境 錯誤處理
+const resError = (err, res) => {
+  res.status(err.statusCode).json({
+    message: err.message,
+    statusCode: err.statusCode,
+    isOperational: err.isOperational,
+    stack: err.stack,
+  });
+};
+
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
+  err.statusCode = err.statusCode || 500;
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render("error");
+  if (err.name === "ValidationError") {
+    err.message = "資料欄位未填寫正確，請重新輸入！";
+    err.isOperational = true;
+    return resError(err, res);
+  }
+
+  resError(err, res);
 });
 
+// 未捕捉到的 catch
+process.on("unhandledRejection", (err, promise) => {
+  console.error("未捕捉到的 rejection：", promise, "原因：", err);
+});
+
+// 導出給 ./bin/www 使用
 module.exports = app;
