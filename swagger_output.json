@@ -182,6 +182,64 @@
           }
         }
       }
+    },
+    "/freshfoods/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/foods/calculatefood": {
+      "post": {
+        "tags": [
+          "Food"
+        ],
+        "summary": "每日鮮食計算",
+        "description": "每日鮮食計算",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "memberId": {
+                  "type": "string",
+                  "example": "會員 ID"
+                },
+                "weight": {
+                  "type": "string",
+                  "example": "體重"
+                },
+                "activity": {
+                  "type": "string",
+                  "example": "活動量"
+                },
+                "foodId": {
+                  "type": "string",
+                  "example": "食物 ID"
+                }
+              },
+              "required": [
+                "memberId",
+                "weight",
+                "activity",
+                "foodId"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
     }
   }
 }

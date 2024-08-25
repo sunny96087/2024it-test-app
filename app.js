@@ -12,14 +12,14 @@ const swaggerFile = require("./swagger_output.json");
 const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const feedbackRoute = require("./routes/feedback");
+const freshfoodRoute = require("./routes/freshFood");
+const foodRoute = require("./routes/food");
 
 const mongoose = require("mongoose");
 
 // 將 .env 檔案中的變數載入到 process.env 中
 const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
-
-const Feedback = require("./models/feedback");
 
 var app = express();
 
@@ -59,6 +59,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/feedbacks", feedbackRoute);
+app.use("/freshfoods", freshfoodRoute);
+app.use("/foods", foodRoute);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
